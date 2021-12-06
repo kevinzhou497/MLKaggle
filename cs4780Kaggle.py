@@ -32,22 +32,23 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
         temp_x_test_2 = temp_x_test
 
         x_train_shape = []
-        print(len(temp_x_train_2[0]))
+        #print(i)
+        #print(len(temp_x_train_2[0]))
         for f in range(len(temp_x_train_2)):
-            temp = np.delete(temp_x_train_2[f], 0)
+            temp = np.delete(temp_x_train_2[f], len(temp_x_train[0]) - 1  - i)
             x_train_shape.append(temp)
         temp_x_train_2 = x_train_shape
-        print(len(temp_x_train_2[0]))
+        #print(len(temp_x_train_2[0]))
 
         x_val_shape = []
         for j in range(len(temp_x_val_2)):
-            temp = np.delete(temp_x_val_2[j], 0)
+            temp = np.delete(temp_x_val_2[j], len(temp_x_val[0]) - 1  - i)
             x_val_shape.append(temp)
         temp_x_val_2 = x_val_shape
 
         x_test_shape = []
-        for j in range(len(temp_x_test_2)):
-            temp = np.delete(temp_x_test_2[j], 0)
+        for z in range(len(temp_x_test_2)):
+            temp = np.delete(temp_x_test_2[z], len(temp_x_test[0]) - 1  - i)
             x_test_shape.append(temp)
         temp_x_test_2 = x_test_shape
 
@@ -56,14 +57,14 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
         LR_new.fit(temp_x_train_2, temp_y_train_2)
         y_pred = LR_new.predict(temp_x_val_2)
         currentScore = score(y_pred, y_val)
-        #print(currentScore)
+        print(currentScore)
         if currentScore < bestScore:
             bestScore = currentScore
             temp_x_train = temp_x_train_2
             temp_y_train = temp_y_train_2
             temp_x_val = temp_x_val_2
             temp_x_test = temp_x_test_2
-            i = len(temp_x_test) - 1
+            i = len(temp_x_test[0]) - 1
         i = i - 1
 
     return temp_x_train, temp_y_train, temp_x_test
