@@ -14,26 +14,59 @@ def score(preds, y_val):
     return score / len(preds)
 
 
-def deleteFeature(x_train, y_train, x_val, y_val, bestScore):
+def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
     temp_x_train = x_train
     temp_y_train = y_train
-    for i in range(len(x_train[0])):
+    temp_x_val = x_val
+    temp_x_test = x_test
+
+    #for i in range(len(x_train[0])):
+    # x_train[0] doesn't update, so if i = 23, we cant delete 22nd index 
+    #from a shorter array, so i jsut removed 1st
+    i = len(x_train[0]) - 1
+    print(i)
+    while (i != 0):
         temp_x_train_2 = temp_x_train
         temp_y_train_2 = temp_y_train
-        for f in temp_x_train_2:
-            np.delete(f, i)
-        # for fy in temp_y_train_2:
-           # np.delete(fy, i)
+        temp_x_val_2 = temp_x_val
+        temp_x_test_2 = temp_x_test
 
+        x_train_shape = []
+        print(len(temp_x_train_2[0]))
+        for f in range(len(temp_x_train_2)):
+            temp = np.delete(temp_x_train_2[f], 0)
+            x_train_shape.append(temp)
+        temp_x_train_2 = x_train_shape
+        print(len(temp_x_train_2[0]))
+
+        x_val_shape = []
+        for j in range(len(temp_x_val_2)):
+            temp = np.delete(temp_x_val_2[j], 0)
+            x_val_shape.append(temp)
+        temp_x_val_2 = x_val_shape
+
+        x_test_shape = []
+        for j in range(len(temp_x_test_2)):
+            temp = np.delete(temp_x_test_2[j], 0)
+            x_test_shape.append(temp)
+        temp_x_test_2 = x_test_shape
+
+ 
         LR_new = LinearRegression()
-        LR_new.fit(temp_x_train, temp_y_train)
-        y_pred = LR.predict(x_val)
+        LR_new.fit(temp_x_train_2, temp_y_train_2)
+        y_pred = LR_new.predict(temp_x_val_2)
         currentScore = score(y_pred, y_val)
+        #print(currentScore)
         if currentScore < bestScore:
             bestScore = currentScore
             temp_x_train = temp_x_train_2
             temp_y_train = temp_y_train_2
-    return temp_x_train, temp_y_train
+            temp_x_val = temp_x_val_2
+            temp_x_test = temp_x_test_2
+            i = len(temp_x_test)
+        i = i - 1
+
+    return temp_x_train, temp_y_train, temp_x_test
 
 
 file = open('covid_dataset.pkl', 'rb')
@@ -78,14 +111,23 @@ for x in X_test:
     x[x == 0] = mean
     x_test.append(x)
 
+
+
+#dummy numbers i created
+# x_train = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+# y_train = np.array([13, 14, 15])
+# x_val = np.array([[17, 18, 19, 20], [21, 22, 23, 24]])
+# y_val = np.array([1, 2])
+# x_test = np.array([[25,26, 27, 28], [30, 31, 32, 33]])
+
+
 LR = LinearRegression()
 LR.fit(x_train, y_train)
 y_pred = LR.predict(x_val)
 
 test_pred = y_pred
 initial_score = score(y_pred, y_val)
-print(initial_score)
-x_train, y_train = deleteFeature(x_train, y_train, x_val, y_val, initial_score)
+x_train, y_train, x_test = deleteFeature(x_train, y_train, x_val, y_val, x_test, initial_score)
 LR = LinearRegression()
 LR.fit(x_train, y_train)
 test_pred = LR.predict(x_test)
