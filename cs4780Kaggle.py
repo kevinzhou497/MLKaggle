@@ -63,7 +63,7 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
             temp_y_train = temp_y_train_2
             temp_x_val = temp_x_val_2
             temp_x_test = temp_x_test_2
-            i = len(temp_x_test)
+            i = len(temp_x_test) - 1
         i = i - 1
 
     return temp_x_train, temp_y_train, temp_x_test
