@@ -10,6 +10,11 @@ import numpy as np
 import xgboost
 from xgboost import XGBRegressor
 
+# potential improvements
+# 1. change feature selection process
+# 2. tune parameters of XGB
+# 3. changing training and validation
+
 
 def score(preds, y_val):
     score = 0
@@ -140,6 +145,7 @@ for i in range(23):
     feature_means_val.append(i_sum / counter)
 
 
+# replaces nones with mean of a given feature for each country
 feature_means_test = []
 for i in range(23):
     i_sum = 0
@@ -209,7 +215,6 @@ for i in range(num):
         test_pred[i] -= mean * .4
     if test_pred[i] < mean * .5:
         test_pred[i] += mean*.25
-
 
 
 pd.DataFrame(test_pred).to_csv("predictions.csv",
