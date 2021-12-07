@@ -7,7 +7,7 @@ from sklearn import metrics
 import pandas as pd
 import pickle as pkl
 import numpy as np
-import xgboost
+import xgboost as xgb
 from xgboost import XGBRegressor
 
 
@@ -37,7 +37,6 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
         temp_x_test_2 = temp_x_test
 
         x_train_shape = []
-
         # print(i)
         # print(len(temp_x_train_2[0]))
         for f in range(len(temp_x_train_2)):
@@ -65,15 +64,12 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
        # print(currentScore)
         if currentScore < bestScore:
             bestScore = currentScore
-            temp_x_train = temp_x_train_2
-            temp_y_train = temp_y_train_2
-            temp_x_val = temp_x_val_2
-            temp_x_test = temp_x_test_2
             i = len(temp_x_test[0]) - 1
+            features_drop.append(i)
         print(bestScore)
         i = i - 1
 
-    return temp_x_train, temp_y_train, temp_x_test
+    return features_drop
 
 
 # data = pd.read_pickle("covid_dataset.pkl")
@@ -186,8 +182,28 @@ y_pred = LR.predict(x_val)
 test_pred = y_pred
 initial_score = score(y_pred, y_val)
 
-x_train_new, y_train_new, x_test_new = deleteFeature(
+x_train_shape = []
+features_drop = []
+features_drop = deleteFeature(
     x_train, y_train, x_val, y_val, x_test, initial_score)
+print(x_train[0])
+for i in range(len(features_drop)):
+    x_train_shape = []
+    x_test_shape = []
+    x_val_shape = []
+    for j in range(len(x_train)):
+        temp = np.delete(x_train[j], features_drop[i])
+        x_train_shape.append(temp)
+    x_train = x_train_shape
+    for j in range(len(x_val)):
+        temp = np.delete(x_val[j], features_drop[i])
+        x_val_shape.append(temp)
+    x_val = x_val_shape
+    for j in range(len(x_test)):
+        temp = np.delete(x_test[j], features_drop[i])
+        x_test_shape.append(temp)
+    x_test = x_test_shape
+print(len(x_train[0]))
 
 
 '''
@@ -195,21 +211,23 @@ clf = Ridge(alpha=1.0)
 clf.fit(X, y)
 '''
 LR_2 = XGBRegressor()
-LR_2.fit(x_train_new, y_train_new)
+LR_2.fit(x_train, y_train)
 # LR_2.fit(x_train_new, y_train_new)
 
-test_pred = LR_2.predict(x_test_new)
+test_pred = LR_2.predict(x_test)
 
 
 # go through the predictions and subtract if greater than mean
 mean = np.mean(test_pred)
 num = len(test_pred)
 for i in range(num):
-    if test_pred[i] > mean * 1.3:
-        test_pred[i] -= mean * .4
+    if test_pred[i] > mean * 1.5:
+        test_pred[i] -= mean * .75
     if test_pred[i] < mean * .5:
         test_pred[i] += mean*.25
-
+for i in range(len(test_pred)):
+    print(i)
+    print(test_pred[i])
 
 
 pd.DataFrame(test_pred).to_csv("predictions.csv",
