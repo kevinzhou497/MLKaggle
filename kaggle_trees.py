@@ -4,11 +4,24 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import Lasso
 from sklearn import metrics
+from sklearn import tree
+import seaborn as sns
+from sklearn import preprocessing
+from sklearn import utils
+
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import pickle as pkl
 import numpy as np
 import xgboost
 from xgboost import XGBRegressor
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import BaggingClassifier
 
 # potential improvements
 # 1. change feature selection process
@@ -34,7 +47,6 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
     # from a shorter array, so i jsut removed 1st
     features_drop = []
     i = len(x_train[0]) - 1
-    # print(i)
     while (i != 0):
         temp_x_train_2 = temp_x_train
         temp_y_train_2 = temp_y_train
@@ -63,11 +75,22 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
             x_test_shape.append(temp)
         temp_x_test_2 = x_test_shape
 
-        LR_new = XGBRegressor()
+        tree = DecisionTreeClassifier()
+        LR_new = BaggingClassifier(tree, n_estimators=3, max_samples=.2,
+                        random_state=5)
+
         LR_new.fit(temp_x_train_2, temp_y_train_2)
         y_pred = LR_new.predict(temp_x_val_2)
+
+
+        # clf=RandomForestClassifier(n_estimators=100)
+        # lab_enc = preprocessing.LabelEncoder()
+        # y_train = lab_enc.fit_transform(y_train)
+        # clf.fit(temp_x_train_2,temp_y_train_2)
+        # test_pred=clf.predict(temp_x_val_2)
+
         currentScore = score(y_pred, y_val)
-       # print(currentScore)
+        #print(currentScore)
         if currentScore < bestScore:
             bestScore = currentScore
             temp_x_train = temp_x_train_2
@@ -157,11 +180,26 @@ for i in range(23):
     feature_means_test.append(i_sum / counter)
 
 x_train = []
+china_index = 0
 for x in (X_train):
+    china_index += 1
     for i in range(23):
         if x[i] == None:
             x[i] = feature_means_train[i]
-    x_train.append(x)
+        # if x[i] > 1000000000:
+        #     print(china_index) #said china index was 10
+    if china_index != 10:   
+      x_train.append(x)
+print(len(x_train))
+
+
+temp = []
+for y_l in range(len(y_train)):
+    if y_l != 10:
+      temp.append(y_train[y_l])
+y_train = temp
+print(len(y_train))
+
 
 x_val = []
 for x in X_val:
@@ -184,10 +222,23 @@ for x in X_test:
 # y_val = np.array([1, 2])
 # x_test = np.array([[25,26, 27, 28], [30, 31, 32, 33]])
 
+tree = DecisionTreeClassifier()
+bag = BaggingClassifier(tree, n_estimators=3, max_samples=.2,
+                        random_state=5)
+lab_enc = preprocessing.LabelEncoder()
+y_train = lab_enc.fit_transform(y_train)
+bag.fit(x_train, y_train)
 
-LR = XGBRegressor()
-LR.fit(x_train, y_train)
-y_pred = LR.predict(x_val)
+y_pred=bag.predict(x_val)
+
+
+# clf=RandomForestClassifier(n_estimators=100)
+# lab_enc = preprocessing.LabelEncoder()
+# y_train = lab_enc.fit_transform(y_train)
+# clf.fit(x_train,y_train)
+# y_pred=clf.predict(x_test)
+
+
 
 test_pred = y_pred
 initial_score = score(y_pred, y_val)
@@ -200,11 +251,24 @@ x_train_new, y_train_new, x_test_new = deleteFeature(
 clf = Ridge(alpha=1.0)
 clf.fit(X, y)
 '''
-LR_2 = XGBRegressor()
-LR_2.fit(x_train_new, y_train_new)
-# LR_2.fit(x_train_new, y_train_new)
 
-test_pred = LR_2.predict(x_test_new)
+tree = DecisionTreeClassifier()
+bag = BaggingClassifier(tree, n_estimators=3, max_samples=.2,
+                        random_state=5)
+
+bag.fit(x_train_new, y_train_new)
+
+# #clf_2 = tree.DecisionTreeRegressor()
+# #clf_2.fit(x_train_new, y_train_new)
+# # LR_2.fit(x_train_new, y_train_new)
+
+test_pred = bag.predict(x_test_new)
+
+# clf=RandomForestClassifier(n_estimators=100)
+# lab_enc = preprocessing.LabelEncoder()
+# y_train = lab_enc.fit_transform(y_train)
+# clf.fit(x_train,y_train)
+# test_pred=clf.predict(x_test)
 
 
 # go through the predictions and subtract if greater than mean

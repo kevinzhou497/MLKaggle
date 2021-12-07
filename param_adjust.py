@@ -8,7 +8,37 @@ import pandas as pd
 import pickle as pkl
 import numpy as np
 import xgboost
+from sklearn import tree
+import seaborn as sns
 from xgboost import XGBRegressor
+
+
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import cross_val_score
+from xgboost import XGBRegressor
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import BaggingClassifier
+
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lars
+from sklearn.linear_model import TheilSenRegressor
+from sklearn.linear_model import HuberRegressor
+from sklearn.linear_model import PassiveAggressiveRegressor
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import OrthogonalMatchingPursuit
+from sklearn.svm import SVR
+from sklearn.svm import NuSVR
+from sklearn.svm import LinearSVR
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.isotonic import IsotonicRegression
 
 # potential improvements
 # 1. change feature selection process
@@ -63,8 +93,29 @@ def deleteFeature(x_train, y_train, x_val, y_val, x_test, bestScore):
             x_test_shape.append(temp)
         temp_x_test_2 = x_test_shape
 
-        LR_new = XGBRegressor()
+        LR_new = XGBRegressor(verbosity=0)
+        #LR_new = tree.DecisionTreeRegressor()
         LR_new.fit(temp_x_train_2, temp_y_train_2)
+        param_grid = dict(
+            n_jobs=[5],
+            learning_rate=[0.1, 0.5],
+            objective=['reg:squarederror'],
+            max_depth=[5, 10, 15], 
+            n_estimators=[100],
+            subsample=[0.2, 0.8, 1.0],
+            gamma=[0.05, 0.5],
+            scale_pos_weight=[0, 1],
+            reg_alpha=[0, 0.5],
+            reg_lambda=[1, 0],
+        )
+        # LR_new = XGBRegressor(random_state=1, verbosity=1)
+
+        grid_search = GridSearchCV(estimator=LR_new,
+                                  param_grid=param_grid,
+                                  scoring='neg_root_mean_squared_error',
+                                  )
+        LR_new = grid_search.fit(temp_x_train_2, temp_y_train_2)
+        #LR_new.fit(temp_x_train_2, temp_y_train_2)
         y_pred = LR_new.predict(temp_x_val_2)
         currentScore = score(y_pred, y_val)
        # print(currentScore)
@@ -157,11 +208,25 @@ for i in range(23):
     feature_means_test.append(i_sum / counter)
 
 x_train = []
+china_index = 0
 for x in (X_train):
+    china_index += 1
     for i in range(23):
         if x[i] == None:
             x[i] = feature_means_train[i]
-    x_train.append(x)
+        # if x[i] > 1000000000:
+        #     print(china_index) #said china index was 10
+    if china_index != 10:   
+      x_train.append(x)
+print(len(x_train))
+
+
+temp = []
+for y_l in range(len(y_train)):
+    if y_l != 10:
+      temp.append(y_train[y_l])
+y_train = temp
+print(len(y_train))
 
 x_val = []
 for x in X_val:
@@ -183,10 +248,30 @@ for x in X_test:
 # x_val = np.array([[17, 18, 19, 20], [21, 22, 23, 24]])
 # y_val = np.array([1, 2])
 # x_test = np.array([[25,26, 27, 28], [30, 31, 32, 33]])
+# param_grid = dict(
+#     n_jobs=[10],
+#     learning_rate=[0.1, 0.5],
+#     objective=['reg:squarederror'],
+#     max_depth=[5], 
+#     n_estimators=[50],
+#     subsample=[0.2, 0.8, 1.0],
+#     gamma=[0.05, 0.5],
+#     scale_pos_weight=[0, 1],
+#     reg_alpha=[0, 0.5],
+#     reg_lambda=[1, 0],
+# )
 
-
-LR = XGBRegressor()
+LR = XGBRegressor(verbosity=0)
+#LR = tree.DecisionTreeRegressor()
 LR.fit(x_train, y_train)
+#LR = XGBRegressor(random_state=1, verbosity=1)
+
+# grid_search = GridSearchCV(estimator=LR,
+#                            param_grid=param_grid,
+#                            scoring='neg_root_mean_squared_error',
+#                            )
+# LR = grid_search.fit(x_train, y_train)
+
 y_pred = LR.predict(x_val)
 
 test_pred = y_pred
@@ -200,10 +285,22 @@ x_train_new, y_train_new, x_test_new = deleteFeature(
 clf = Ridge(alpha=1.0)
 clf.fit(X, y)
 '''
-LR_2 = XGBRegressor()
-LR_2.fit(x_train_new, y_train_new)
-# LR_2.fit(x_train_new, y_train_new)
 
+
+LR_2 = XGBRegressor(random_state=1, verbosity=1)
+
+# grid_search = GridSearchCV(estimator=LR_2,
+#                            param_grid=param_grid,
+#                            scoring='neg_root_mean_squared_error',
+#                            )
+
+# LR_2 = grid_search.fit(x_train_new, y_train_new)
+
+#LR_2 = tree.DecisionTreeRegressor()
+LR_2.fit(x_train_new, y_train_new)
+
+#LR_2 = XGBRegressor()
+#LR_2.fit(x_train_new, y_train_new)
 test_pred = LR_2.predict(x_test_new)
 
 
